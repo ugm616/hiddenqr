@@ -1,5 +1,4 @@
-// crypto.js - AES-GCM encryption wrapper using Web Crypto API
-export async function getKeyMaterial(password) {
+async function getKeyMaterial(password) {
   return crypto.subtle.importKey(
     "raw",
     new TextEncoder().encode(password),
@@ -9,7 +8,7 @@ export async function getKeyMaterial(password) {
   );
 }
 
-export async function deriveKey(keyMaterial) {
+async function deriveKey(keyMaterial) {
   return crypto.subtle.deriveKey(
     {
       name: "PBKDF2",
@@ -24,7 +23,7 @@ export async function deriveKey(keyMaterial) {
   );
 }
 
-export async function encryptData(data, password) {
+async function encryptData(data, password) {
   const keyMaterial = await getKeyMaterial(password);
   const key = await deriveKey(keyMaterial);
   const iv = crypto.getRandomValues(new Uint8Array(12));
@@ -35,7 +34,7 @@ export async function encryptData(data, password) {
   return combined;
 }
 
-export async function decryptData(data, password) {
+async function decryptData(data, password) {
   const keyMaterial = await getKeyMaterial(password);
   const key = await deriveKey(keyMaterial);
   const iv = data.slice(0, 12);
