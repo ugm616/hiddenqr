@@ -1,3 +1,13 @@
+const progressBar = document.getElementById("progressBar");
+
+function updateProgress(percent) {
+  progressBar.style.width = `${percent}%`;
+}
+
+function resetProgress() {
+  progressBar.style.width = "0%";
+}
+
 // HiddenQR - QR Video Encoder/Decoder
 // Core logic for encoding, decoding, encryption, compression, and steganography
 
