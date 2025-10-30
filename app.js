@@ -106,7 +106,7 @@ function chunkData(data, chunkSize) {
 // QR Rendering
 function renderQR(data, stegMode) {
   const canvas = document.createElement("canvas");
-  const qr = qrcode(0, "L");
+  const qr = new QRCodeModel(0, "L");
   qr.addData(data);
   qr.make();
   canvas.width = canvas.height = 177;
