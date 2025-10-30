@@ -8,9 +8,6 @@ function resetProgress() {
   progressBar.style.width = "0%";
 }
 
-// HiddenQR - QR Video Encoder/Decoder
-// Core logic for encoding, decoding, encryption, compression, and steganography
-
 // UI Elements
 const encodeTab = document.getElementById("encodeTab");
 const decodeTab = document.getElementById("decodeTab");
@@ -51,16 +48,10 @@ function uint8ToText(uint8) {
 
 // Compression
 function compressData(data, method) {
-  if (method === "gzip") {
-    return pako.gzip(data);
-  }
-  return data;
+  return method === "gzip" ? pako.gzip(data) : data;
 }
 function decompressData(data, method) {
-  if (method === "gzip") {
-    return pako.ungzip(data);
-  }
-  return data;
+  return method === "gzip" ? pako.ungzip(data) : data;
 }
 
 // Encryption
@@ -68,11 +59,7 @@ async function encryptData(data, password) {
   const keyMaterial = await getKeyMaterial(password);
   const key = await deriveKey(keyMaterial);
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  const encrypted = await crypto.subtle.encrypt(
-    { name: "AES-GCM", iv },
-    key,
-    data
-  );
+  const encrypted = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, data);
   const combined = new Uint8Array(iv.length + encrypted.byteLength);
   combined.set(iv, 0);
   combined.set(new Uint8Array(encrypted), iv.length);
@@ -84,22 +71,12 @@ async function decryptData(data, password) {
   const key = await deriveKey(keyMaterial);
   const iv = data.slice(0, 12);
   const encrypted = data.slice(12);
-  const decrypted = await crypto.subtle.decrypt(
-    { name: "AES-GCM", iv },
-    key,
-    encrypted
-  );
+  const decrypted = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, encrypted);
   return new Uint8Array(decrypted);
 }
 
 function getKeyMaterial(password) {
-  return crypto.subtle.importKey(
-    "raw",
-    textToUint8(password),
-    "PBKDF2",
-    false,
-    ["deriveBits", "deriveKey"]
-  );
+  return crypto.subtle.importKey("raw", textToUint8(password), "PBKDF2", false, ["deriveBits", "deriveKey"]);
 }
 
 function deriveKey(keyMaterial) {
@@ -158,42 +135,22 @@ function renderQR(data, stegMode) {
 
 // Video Generation
 generateVideoBtn.onclick = async () => {
+  resetProgress();
   let raw = textToUint8(inputData.value);
   const method = compressionMethod.value;
   const steg = stegMethod.value;
   const encrypt = encryptToggle.checked;
   const password = encryptKey.value;
-  resetProgress();
-frameIndex = 0;
-const ctx = canvases[0].getContext("2d");
-const interval = setInterval(() => {
-  if (frameIndex >= canvases.length) {
-    clearInterval(interval);
-    recorder.stop();
-    return;
-  }
-  ctx.drawImage(canvases[frameIndex], 0, 0);
-  updateProgress(Math.floor((frameIndex / canvases.length) * 100));
-  frameIndex++;
-}, 1000 / 30);
 
-
-  // Compression
   raw = compressData(raw, method);
+  if (encrypt && password) raw = await encryptData(raw, password);
 
-  // Encryption
-  if (encrypt && password) {
-    raw = await encryptData(raw, password);
-  }
-
-  // Chunking
-  const chunks = chunkData(raw, 1000); // conservative QR payload size
+  const chunks = chunkData(raw, 1000);
   const canvases = chunks.map((chunk, i) => {
     const payload = `${i}|${chunks.length}|${Array.from(chunk).join(",")}`;
     return renderQR(payload, steg);
   });
 
-  // Record video
   const stream = canvases[0].getContext("2d").canvas.captureStream(30);
   const recorder = new MediaRecorder(stream, { mimeType: "video/webm" });
   const chunksOut = [];
@@ -205,6 +162,7 @@ const interval = setInterval(() => {
     previewVideo.src = url;
     downloadLink.href = url;
     downloadLink.style.display = "inline-block";
+    updateProgress(100);
   };
 
   recorder.start();
@@ -218,11 +176,14 @@ const interval = setInterval(() => {
       return;
     }
     ctx.drawImage(canvases[frameIndex], 0, 0);
+    updateProgress(Math.floor((frameIndex / canvases.length) * 100));
     frameIndex++;
   }, 1000 / 30);
 };
+
 // Video Decoding
 decodeVideoBtn.onclick = async () => {
+  resetProgress();
   const file = videoInput.files[0];
   if (!file) return;
 
@@ -237,7 +198,7 @@ decodeVideoBtn.onclick = async () => {
   video.playsInline = true;
 
   const canvas = document.createElement("canvas");
-  const ctx = canvas.getContext("2d");
+  const decodeCtx = canvas.getContext("2d");
 
   const chunks = [];
   let frameCount = 0;
@@ -252,38 +213,19 @@ decodeVideoBtn.onclick = async () => {
     const interval = setInterval(() => {
       if (video.paused || video.ended) {
         clearInterval(interval);
-        processChunks(chunks, decrypt, method);
+        processChunks(chunks, decrypt, method).then(() => updateProgress(100));
         return;
-        resetProgress();
-const interval = setInterval(() => {
-  if (video.paused || video.ended) {
-    clearInterval(interval);
-    processChunks(chunks, decrypt, method).then(() => updateProgress(100));
-    return;
-  }
-
-  ctx.drawImage(video, 0, 0);
-  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  const result = jsQR(imageData.data, canvas.width, canvas.height);
-
-  if (result && result.data) {
-    chunks.push(result.data);
-  }
-
-  updateProgress(Math.floor((frameCount / Math.ceil(video.duration * 30)) * 100));
-  frameCount++;
-}, 1000 / 30);
-
       }
 
-      ctx.drawImage(video, 0, 0);
-      const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+      decodeCtx.drawImage(video, 0, 0);
+      const imageData = decodeCtx.getImageData(0, 0, canvas.width, canvas.height);
       const result = jsQR(imageData.data, canvas.width, canvas.height);
 
       if (result && result.data) {
         chunks.push(result.data);
       }
 
+      updateProgress(Math.floor((frameCount / Math.ceil(video.duration * 30)) * 100));
       frameCount++;
     }, 1000 / 30);
   };
@@ -302,28 +244,34 @@ async function processChunks(frames, password, compression) {
 
   let combined = new Uint8Array(sorted.reduce((acc, chunk) => acc + chunk.length, 0));
   let offset = 0;
-  for (const chunk of sorted) {
-    combined.set(chunk, offset);
-    offset += chunk.length;
-  }
+for (const chunk of sorted) {
+  combined.set(chunk, offset);
+  offset += chunk.length;
+}
 
-  // Decrypt
-  if (password) {
-    try {
-      combined = await decryptData(combined, password);
-    } catch (e) {
-      outputData.value = "Decryption failed. Check your password.";
-      return;
-    }
-  }
-
-  // Decompress
+// Decrypt
+if (password) {
   try {
-    combined = decompressData(combined, compression);
+    combined = await decryptData(combined, password);
   } catch (e) {
-    outputData.value = "Decompression failed.";
+    outputData.value = "Decryption failed. Check your password.";
+    updateProgress(100);
     return;
   }
-
-  outputData.value = uint8ToText(combined);
 }
+
+// Decompress
+try {
+  combined = decompressData(combined, compression);
+} catch (e) {
+  outputData.value = "Decompression failed.";
+  updateProgress(100);
+  return;
+}
+
+// Display final output
+outputData.value = uint8ToText(combined);
+updateProgress(100);
+}
+
+ 
