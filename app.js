@@ -163,6 +163,20 @@ generateVideoBtn.onclick = async () => {
   const steg = stegMethod.value;
   const encrypt = encryptToggle.checked;
   const password = encryptKey.value;
+  resetProgress();
+let frameIndex = 0;
+const ctx = canvases[0].getContext("2d");
+const interval = setInterval(() => {
+  if (frameIndex >= canvases.length) {
+    clearInterval(interval);
+    recorder.stop();
+    return;
+  }
+  ctx.drawImage(canvases[frameIndex], 0, 0);
+  updateProgress(Math.floor((frameIndex / canvases.length) * 100));
+  frameIndex++;
+}, 1000 / 30);
+
 
   // Compression
   raw = compressData(raw, method);
@@ -240,6 +254,26 @@ decodeVideoBtn.onclick = async () => {
         clearInterval(interval);
         processChunks(chunks, decrypt, method);
         return;
+        resetProgress();
+const interval = setInterval(() => {
+  if (video.paused || video.ended) {
+    clearInterval(interval);
+    processChunks(chunks, decrypt, method).then(() => updateProgress(100));
+    return;
+  }
+
+  ctx.drawImage(video, 0, 0);
+  const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  const result = jsQR(imageData.data, canvas.width, canvas.height);
+
+  if (result && result.data) {
+    chunks.push(result.data);
+  }
+
+  updateProgress(Math.floor((frameCount / Math.ceil(video.duration * 30)) * 100));
+  frameCount++;
+}, 1000 / 30);
+
       }
 
       ctx.drawImage(video, 0, 0);
