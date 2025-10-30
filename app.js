@@ -164,7 +164,7 @@ generateVideoBtn.onclick = async () => {
   const encrypt = encryptToggle.checked;
   const password = encryptKey.value;
   resetProgress();
-let frameIndex = 0;
+frameIndex = 0;
 const ctx = canvases[0].getContext("2d");
 const interval = setInterval(() => {
   if (frameIndex >= canvases.length) {
