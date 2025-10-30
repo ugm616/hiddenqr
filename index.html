@@ -38,6 +38,9 @@
       <button id="generateVideo">Generate QR Video</button>
       <video id="previewVideo" controls></video>
       <a id="downloadLink" download="hiddenqr.webm">Download Video</a>
+      <div class="progress-container">
+  <div id="progressBar" class="progress-bar"></div>
+</div>
     </section>
 
     <section id="decodePanel" style="display:none;">
@@ -46,6 +49,9 @@
       <input type="password" id="decryptKey" placeholder="Decryption key (if needed)" />
       <button id="decodeVideo">Decode QR Video</button>
       <textarea id="outputData" readonly placeholder="Decoded output will appear here..."></textarea>
+      <div class="progress-container">
+  <div id="progressBar" class="progress-bar"></div>
+</div>
     </section>
   </main>
 
