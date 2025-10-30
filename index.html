@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>HiddenQR</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>HiddenQR</h1>
+    <nav>
+      <button id="encodeTab">Encode</button>
+      <button id="decodeTab">Decode</button>
+    </nav>
+  </header>
+
+  <main>
+    <section id="encodePanel">
+      <h2>Encode Data</h2>
+      <textarea id="inputData" placeholder="Enter text or paste file content..."></textarea>
+      <div class="options">
+        <label><input type="checkbox" id="encryptToggle" /> Encrypt</label>
+        <input type="password" id="encryptKey" placeholder="Encryption key" />
+        <label>Compression:
+          <select id="compressionMethod">
+            <option value="none">None</option>
+            <option value="gzip">Gzip</option>
+          </select>
+        </label>
+        <label>Steganography:
+          <select id="stegMethod">
+            <option value="none">None</option>
+            <option value="grayscale">Grayscale Modulation</option>
+          </select>
+        </label>
+      </div>
+      <button id="generateVideo">Generate QR Video</button>
+      <video id="previewVideo" controls></video>
+      <a id="downloadLink" download="hiddenqr.webm">Download Video</a>
+    </section>
+
+    <section id="decodePanel" style="display:none;">
+      <h2>Decode Video</h2>
+      <input type="file" id="videoInput" accept="video/*" />
+      <input type="password" id="decryptKey" placeholder="Decryption key (if needed)" />
+      <button id="decodeVideo">Decode QR Video</button>
+      <textarea id="outputData" readonly placeholder="Decoded output will appear here..."></textarea>
+    </section>
+  </main>
+
+  <footer>
+    <p>HiddenQR © 2025 | <a href="https://github.com/ugm616/hiddenqr">GitHub</a></p>
+  </footer>
+
+  <script src="libs/qrcode.js"></script>
+  <script src="libs/jsQR.js"></script>
+  <script src="libs/pako.min.js"></script>
+  <script src="libs/crypto.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
